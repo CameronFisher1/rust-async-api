@@ -5,7 +5,7 @@ use std::sync::{Arc, Mutex};
 use axum::{Router, routing::get};
 use axum::routing::{delete, post};
 use crate::controller::health::health_check;
-use crate::controller::user::{create_user, delete_user, get_all_users};
+use crate::controller::user::{create_user, delete_user, get_all_users, get_user, update_user};
 use model::user::User;
 
 #[derive(Clone)]
@@ -22,7 +22,7 @@ async fn main() {
     let app = Router::new()
         .route("/health", get(health_check))
         .route("/users", post(create_user).get(get_all_users))
-        .route("/users/:id", delete(delete_user))
+        .route("/users/:id", delete(delete_user).get(get_user).put(update_user))
         .with_state(state);
 
     let addr = "127.0.0.1:8080";
