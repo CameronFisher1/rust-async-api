@@ -1,6 +1,7 @@
 mod controller;
 mod model;
 
+use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use axum::{Router, routing::get};
 use axum::routing::{delete, post};
@@ -10,13 +11,13 @@ use model::user::User;
 
 #[derive(Clone)]
 pub struct AppState {
-    pub users: Arc<Mutex<Vec<User>>>,
+    pub users: Arc<Mutex<HashMap<String, User>>>,
 }
 
 #[tokio::main]
 async fn main() {
     let state = AppState {
-        users: Arc::new(Mutex::new(Vec::new())),
+        users: Arc::new(Mutex::new(HashMap::new())),
     };
 
     let app = Router::new()
