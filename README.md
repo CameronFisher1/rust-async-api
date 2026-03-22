@@ -51,6 +51,14 @@ cargo run
 
 The server runs locally at `http://127.0.0.1:8080`
 
+## Testing
+
+Run the test suite with:
+
+```bash
+cargo test
+```
+
 ## API Endpoints
 
 ### Health
@@ -110,6 +118,10 @@ This project uses:
 - Structured JSON error responses for invalid input and missing resources
 
 This project is intentionally in-memory to keep the focus on learning Rust backend fundamentals such as async handlers, shared state, request validation, and API design.
+
+## CI
+
+GitHub Actions runs the build and test suite on pushes and pull requests to `master`.
 
 ## Notes
 
