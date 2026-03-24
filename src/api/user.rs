@@ -24,14 +24,12 @@ pub async fn create_user(
     let id = Uuid::new_v4().to_string();
 
     let user = User {
-        id: id.clone(),
+        id,
         name: payload.name,
         description: payload.description,
     };
 
-    users.insert(id.clone(), user.clone());
-
-    println!("user {} created", id);
+    users.insert(user.id.clone(), user.clone());
 
     Ok((StatusCode::CREATED, Json(user)))
 }
@@ -64,12 +62,16 @@ pub async fn get_user(
 
     let user = users.get(&id);
 
-    if user.is_none() {
-        Err((StatusCode::NOT_FOUND, Json(ErrorRes {
-            error: "User not found".to_string()
-        })))
-    } else {
-        Ok((StatusCode::OK, Json(user.unwrap().clone())))
+    match user {
+        Some(user) => {
+            Ok((StatusCode::OK, Json(user.clone())))
+        },
+        None => Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorRes {
+                error: "User not found".to_string()
+            })
+       )),
     }
 }
 
@@ -96,14 +98,14 @@ pub async fn update_user(
     }
 
     let new_user = User {
-        id: id.clone(),
+        id,
         name: payload.name,
         description: payload.description,
     };
 
-    users.insert(id.clone(), new_user.clone());
+    users.insert(new_user.id.clone(), new_user.clone());
 
-    Ok((StatusCode::OK, Json(new_user.clone())))
+    Ok((StatusCode::OK, Json(new_user)))
 }
 
 pub async fn delete_user(

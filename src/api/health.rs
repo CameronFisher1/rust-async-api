@@ -1,6 +1,5 @@
 use axum::http::StatusCode;
-use axum::response::IntoResponse;
 
-pub async fn health_check() -> impl IntoResponse {
-    (StatusCode::OK, "ok")
+pub async fn health_check() -> Result<(StatusCode, String), StatusCode> {
+    Ok((StatusCode::OK, "ok".to_string()))
 }
