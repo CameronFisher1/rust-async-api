@@ -132,7 +132,10 @@ async fn get_user_returns_user_when_exists() {
         .await
         .expect("request should succeed");
     let create_body = response_json(create_response).await;
-    let id = create_body["id"].as_str().expect("id should exist").to_string();
+    let id = create_body["id"]
+        .as_str()
+        .expect("id should exist")
+        .to_string();
 
     let response = app
         .oneshot(
@@ -207,7 +210,10 @@ async fn update_user_returns_updated_user() {
         .await
         .expect("request should succeed");
     let create_body = response_json(create_response).await;
-    let id = create_body["id"].as_str().expect("id should exist").to_string();
+    let id = create_body["id"]
+        .as_str()
+        .expect("id should exist")
+        .to_string();
 
     let response = app
         .oneshot(
@@ -291,7 +297,10 @@ async fn delete_user_returns_no_content_when_exists() {
         .await
         .expect("request should succeed");
     let create_body = response_json(create_response).await;
-    let id = create_body["id"].as_str().expect("id should exist").to_string();
+    let id = create_body["id"]
+        .as_str()
+        .expect("id should exist")
+        .to_string();
 
     let response = app
         .oneshot(

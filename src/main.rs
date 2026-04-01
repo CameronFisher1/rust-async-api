@@ -12,7 +12,5 @@ async fn main() {
 
     println!("listening on http://{}", addr);
 
-    axum::serve(listener, app)
-        .await
-        .expect("server error");
+    axum::serve(listener, app).await.expect("server error");
 }

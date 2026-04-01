@@ -1,8 +1,8 @@
 use axum::body::Body;
 use axum::http::{Method, Request, StatusCode};
 use http_body_util::BodyExt;
-use tower::ServiceExt;
 use rust_async_api::app;
+use tower::ServiceExt;
 
 #[tokio::test]
 async fn health_check_returns_ok() {
@@ -19,6 +19,11 @@ async fn health_check_returns_ok() {
 
     assert_eq!(response.status(), StatusCode::OK);
 
-    let body= response.into_body().collect().await.expect("response body").to_bytes();
+    let body = response
+        .into_body()
+        .collect()
+        .await
+        .expect("response body")
+        .to_bytes();
     assert_eq!(&body[..], b"ok");
 }
