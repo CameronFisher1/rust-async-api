@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
-use axum::http::StatusCode;
 use rust_async_api::domain::user::{CreateUserRequest, UpdateUserRequest};
+use rust_async_api::error::app_error::ServiceError;
 use rust_async_api::repository::in_memory_user_repository::InMemoryUserRepository;
 use rust_async_api::service::user_service::UserService;
 
@@ -19,10 +19,8 @@ fn create_user_rejects_invalid_input() {
         description: "Has description".to_string(),
     }) {
         Ok(_) => panic!("create should fail"),
-        Err(err) => {
-            assert_eq!(err.0, StatusCode::BAD_REQUEST);
-            assert_eq!(err.1.0.error, "Invalid payload");
-        }
+        Err(ServiceError::BadRequest(msg)) => assert_eq!(msg, "Invalid payload"),
+        Err(_) => panic!("expected BadRequest"),
     }
 }
 
@@ -32,10 +30,8 @@ fn get_user_rejects_invalid_uuid() {
 
     match service.get_user("not-a-uuid") {
         Ok(_) => panic!("get_user should fail"),
-        Err(err) => {
-            assert_eq!(err.0, StatusCode::BAD_REQUEST);
-            assert_eq!(err.1.0.error, "Invalid ID");
-        }
+        Err(ServiceError::BadRequest(msg)) => assert_eq!(msg, "Invalid ID"),
+        Err(_) => panic!("expected BadRequest"),
     }
 }
 
@@ -45,10 +41,8 @@ fn delete_user_returns_not_found_for_absent_user() {
 
     match service.delete_user("11111111-1111-1111-1111-111111111111") {
         Ok(_) => panic!("delete_user should fail"),
-        Err(err) => {
-            assert_eq!(err.0, StatusCode::NOT_FOUND);
-            assert_eq!(err.1.0.error, "User not found");
-        }
+        Err(ServiceError::NotFound(msg)) => assert_eq!(msg, "User not found"),
+        Err(_) => panic!("expected NotFound"),
     }
 }
 

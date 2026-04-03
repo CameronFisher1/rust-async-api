@@ -8,30 +8,47 @@ pub struct AppError {
     pub error: String,
 }
 
-pub type ApiError = (StatusCode, Json<AppError>);
-
-pub fn api_error(status: StatusCode, message: impl Into<String>) -> ApiError {
-    (
-        status,
-        Json(AppError {
-            error: message.into(),
-        }),
-    )
+pub enum ServiceError {
+    BadRequest(String),
+    NotFound(String),
+    Conflict(String),
+    Internal(String),
 }
 
-pub fn convert_repo_error(error: RepositoryError) -> ApiError {
+pub type ApiError = (StatusCode, Json<AppError>);
+
+pub fn convert_svc_error(error: ServiceError) -> ApiError {
     match error {
-        RepositoryError::DuplicateId => (
+        ServiceError::BadRequest(e) => (
+            StatusCode::BAD_REQUEST,
+            Json(AppError {
+                error: e.to_string(),
+            }),
+        ),
+        ServiceError::NotFound(e) => (
+            StatusCode::NOT_FOUND,
+            Json(AppError {
+                error: e.to_string(),
+            }),
+        ),
+        ServiceError::Conflict(e) => (
             StatusCode::CONFLICT,
             Json(AppError {
-                error: "Resource already exists".into(),
+                error: e.to_string(),
             }),
         ),
-        RepositoryError::StorageFailure => (
+        ServiceError::Internal(e) => (
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(AppError {
-                error: "Internal Server Error".into(),
+                error: e.to_string(),
             }),
         ),
+    }
+}
+
+pub fn convert_repo_error(error: RepositoryError) -> ServiceError {
+    match error {
+        RepositoryError::DuplicateId => ServiceError::Conflict("Resource already exists".into()),
+        RepositoryError::StorageFailure => ServiceError::Internal("Internal Server Error".into()),
     }
 }
