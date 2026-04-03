@@ -1,21 +1,24 @@
 use rust_async_api::domain::user::User;
-use rust_async_api::repository::in_memory_user_repository::InMemoryUserRepository;
 use rust_async_api::repository::UserRepository;
+use rust_async_api::repository::in_memory_user_repository::InMemoryUserRepository;
+use uuid::Uuid;
 
 #[test]
 fn in_memory_repository_crud_flow_works() {
     let repository = InMemoryUserRepository::new();
     let user = User {
-        id: "11111111-1111-1111-1111-111111111111".to_string(),
+        id: Uuid::new_v4(),
         name: "Alice".to_string(),
         description: "Admin".to_string(),
     };
 
-    let created = repository.create(user.clone()).expect("create should succeed");
+    let created = repository
+        .create(user.clone())
+        .expect("create should succeed");
     assert_eq!(created.id, user.id);
 
     let fetched = repository
-        .get_by_id(&user.id)
+        .get_by_id(user.id)
         .expect("get should succeed")
         .expect("user should exist");
     assert_eq!(fetched.name, "Alice");
@@ -35,12 +38,12 @@ fn in_memory_repository_crud_flow_works() {
     assert_eq!(all_users.len(), 1);
 
     let deleted = repository
-        .delete(&updated_user.id)
+        .delete(updated_user.id)
         .expect("delete should succeed");
     assert!(deleted);
     assert!(
         repository
-            .get_by_id(&updated_user.id)
+            .get_by_id(updated_user.id)
             .expect("get should succeed")
             .is_none()
     );
@@ -50,17 +53,17 @@ fn in_memory_repository_crud_flow_works() {
 fn in_memory_repository_update_and_delete_return_absent_for_missing_user() {
     let repository = InMemoryUserRepository::new();
 
+    let uuid = Uuid::new_v4();
+
     let updated = repository
         .update(User {
-            id: "11111111-1111-1111-1111-111111111111".to_string(),
+            id: uuid,
             name: "Ghost".to_string(),
             description: "Missing".to_string(),
         })
         .expect("update should succeed");
     assert!(updated.is_none());
 
-    let deleted = repository
-        .delete("11111111-1111-1111-1111-111111111111")
-        .expect("delete should succeed");
+    let deleted = repository.delete(uuid).expect("delete should succeed");
     assert!(!deleted);
 }

@@ -1,14 +1,14 @@
 pub mod api;
 pub mod domain;
-pub mod service;
-pub mod repository;
 pub mod error;
+pub mod repository;
+pub mod service;
 pub mod state;
 
 use std::sync::Arc;
 
-use axum::routing::{delete, get, post};
 use axum::Router;
+use axum::routing::{delete, get, post};
 
 use crate::api::health::health_check;
 use crate::api::users::{create_user, delete_user, get_all_users, get_user, update_user};

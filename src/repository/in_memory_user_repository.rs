@@ -1,11 +1,11 @@
-use std::collections::HashMap;
-use std::sync::{Mutex, MutexGuard};
-
 use crate::domain::user::User;
 use crate::repository::UserRepository;
+use std::collections::HashMap;
+use std::sync::{Mutex, MutexGuard};
+use uuid::Uuid;
 
 pub struct InMemoryUserRepository {
-    users: Mutex<HashMap<String, User>>,
+    users: Mutex<HashMap<Uuid, User>>,
 }
 
 impl InMemoryUserRepository {
@@ -15,7 +15,7 @@ impl InMemoryUserRepository {
         }
     }
 
-    fn lock_users(&self) -> Result<MutexGuard<'_, HashMap<String, User>>, ()> {
+    fn lock_users(&self) -> Result<MutexGuard<'_, HashMap<Uuid, User>>, ()> {
         self.users.lock().map_err(|_| ())
     }
 }
@@ -23,7 +23,7 @@ impl InMemoryUserRepository {
 impl UserRepository for InMemoryUserRepository {
     fn create(&self, user: User) -> Result<User, ()> {
         let mut users = self.lock_users()?;
-        users.insert(user.id.clone(), user.clone());
+        users.insert(user.id, user.clone());
         Ok(user)
     }
 
@@ -32,9 +32,9 @@ impl UserRepository for InMemoryUserRepository {
         Ok(users.values().cloned().collect())
     }
 
-    fn get_by_id(&self, id: &str) -> Result<Option<User>, ()> {
+    fn get_by_id(&self, id: Uuid) -> Result<Option<User>, ()> {
         let users = self.lock_users()?;
-        Ok(users.get(id).cloned())
+        Ok(users.get(&id).cloned())
     }
 
     fn update(&self, user: User) -> Result<Option<User>, ()> {
@@ -47,8 +47,8 @@ impl UserRepository for InMemoryUserRepository {
         }
     }
 
-    fn delete(&self, id: &str) -> Result<bool, ()> {
+    fn delete(&self, id: Uuid) -> Result<bool, ()> {
         let mut users = self.lock_users()?;
-        Ok(users.remove(id).is_some())
+        Ok(users.remove(&id).is_some())
     }
 }

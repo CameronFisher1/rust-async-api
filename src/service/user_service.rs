@@ -4,7 +4,7 @@ use axum::http::StatusCode;
 use uuid::Uuid;
 
 use crate::domain::user::{CreateUserRequest, UpdateUserRequest, User};
-use crate::error::app_error::{api_error, ApiError};
+use crate::error::app_error::{ApiError, api_error};
 use crate::repository::UserRepository;
 
 #[derive(Clone)]
@@ -23,7 +23,7 @@ impl UserService {
         }
 
         let user = User {
-            id: Uuid::new_v4().to_string(),
+            id: Uuid::new_v4(),
             name: payload.name,
             description: payload.description,
         };
@@ -46,7 +46,10 @@ impl UserService {
 
         let user = self
             .repository
-            .get_by_id(id)
+            .get_by_id(
+                Uuid::parse_str(&id)
+                    .map_err(|_| api_error(StatusCode::BAD_REQUEST, "Invalid input"))?,
+            )
             .map_err(|_| api_error(StatusCode::INTERNAL_SERVER_ERROR, "Internal Server Error"))?;
 
         user.ok_or_else(|| api_error(StatusCode::NOT_FOUND, "User not found"))
@@ -58,7 +61,8 @@ impl UserService {
         }
 
         let new_user = User {
-            id: id.to_string(),
+            id: Uuid::parse_str(&id)
+                .map_err(|_| api_error(StatusCode::BAD_REQUEST, "Invalid input"))?,
             name: payload.name,
             description: payload.description,
         };
@@ -78,7 +82,10 @@ impl UserService {
 
         let deleted = self
             .repository
-            .delete(id)
+            .delete(
+                Uuid::parse_str(&id)
+                    .map_err(|_| api_error(StatusCode::BAD_REQUEST, "Invalid input"))?,
+            )
             .map_err(|_| api_error(StatusCode::INTERNAL_SERVER_ERROR, "Internal Server Error"))?;
 
         if deleted {

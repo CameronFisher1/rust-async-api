@@ -21,7 +21,7 @@ fn create_user_rejects_invalid_input() {
         Ok(_) => panic!("create should fail"),
         Err(err) => {
             assert_eq!(err.0, StatusCode::BAD_REQUEST);
-            assert_eq!(err.1 .0.error, "Invalid input");
+            assert_eq!(err.1.0.error, "Invalid input");
         }
     }
 }
@@ -34,7 +34,7 @@ fn get_user_rejects_invalid_uuid() {
         Ok(_) => panic!("get_user should fail"),
         Err(err) => {
             assert_eq!(err.0, StatusCode::BAD_REQUEST);
-            assert_eq!(err.1 .0.error, "Invalid ID");
+            assert_eq!(err.1.0.error, "Invalid ID");
         }
     }
 }
@@ -47,7 +47,7 @@ fn delete_user_returns_not_found_for_absent_user() {
         Ok(_) => panic!("delete_user should fail"),
         Err(err) => {
             assert_eq!(err.0, StatusCode::NOT_FOUND);
-            assert_eq!(err.1 .0.error, "User not found");
+            assert_eq!(err.1.0.error, "User not found");
         }
     }
 }
@@ -57,15 +57,15 @@ fn service_create_then_update_and_get_works() {
     let service = user_service();
 
     let created = match service.create_user(CreateUserRequest {
-            name: "Alice".to_string(),
-            description: "Admin".to_string(),
-        }) {
+        name: "Alice".to_string(),
+        description: "Admin".to_string(),
+    }) {
         Ok(created) => created,
         Err(_) => panic!("create should succeed"),
     };
 
     let updated = match service.update_user(
-        &created.id,
+        &created.id.to_string(),
         UpdateUserRequest {
             name: "Alice Updated".to_string(),
             description: "Admin Updated".to_string(),
@@ -77,7 +77,7 @@ fn service_create_then_update_and_get_works() {
 
     assert_eq!(updated.name, "Alice Updated");
 
-    let fetched = match service.get_user(&created.id) {
+    let fetched = match service.get_user(&created.id.to_string()) {
         Ok(fetched) => fetched,
         Err(_) => panic!("get should succeed"),
     };

@@ -1,6 +1,6 @@
+use axum::Json;
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
-use axum::Json;
 
 use crate::domain::user::{CreateUserRequest, UpdateUserRequest, User};
 use crate::error::app_error::ApiError;
