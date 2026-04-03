@@ -1,5 +1,5 @@
 use crate::domain::user::User;
-use crate::repository::UserRepository;
+use crate::repository::{RepositoryError, UserRepository};
 use std::collections::HashMap;
 use std::sync::{Mutex, MutexGuard};
 use uuid::Uuid;
@@ -15,29 +15,34 @@ impl InMemoryUserRepository {
         }
     }
 
-    fn lock_users(&self) -> Result<MutexGuard<'_, HashMap<Uuid, User>>, ()> {
-        self.users.lock().map_err(|_| ())
+    fn lock_users(&self) -> Result<MutexGuard<'_, HashMap<Uuid, User>>, RepositoryError> {
+        self.users
+            .lock()
+            .map_err(|_| RepositoryError::StorageFailure)
     }
 }
 
 impl UserRepository for InMemoryUserRepository {
-    fn create(&self, user: User) -> Result<User, ()> {
+    fn create(&self, user: User) -> Result<User, RepositoryError> {
         let mut users = self.lock_users()?;
+        if users.contains_key(&user.id) {
+            return Err(RepositoryError::DuplicateId);
+        }
         users.insert(user.id, user.clone());
         Ok(user)
     }
 
-    fn get_all(&self) -> Result<Vec<User>, ()> {
+    fn get_all(&self) -> Result<Vec<User>, RepositoryError> {
         let users = self.lock_users()?;
         Ok(users.values().cloned().collect())
     }
 
-    fn get_by_id(&self, id: Uuid) -> Result<Option<User>, ()> {
+    fn get_by_id(&self, id: Uuid) -> Result<Option<User>, RepositoryError> {
         let users = self.lock_users()?;
         Ok(users.get(&id).cloned())
     }
 
-    fn update(&self, user: User) -> Result<Option<User>, ()> {
+    fn update(&self, user: User) -> Result<Option<User>, RepositoryError> {
         let mut users = self.lock_users()?;
         if users.contains_key(&user.id) {
             users.insert(user.id.clone(), user.clone());
@@ -47,7 +52,7 @@ impl UserRepository for InMemoryUserRepository {
         }
     }
 
-    fn delete(&self, id: Uuid) -> Result<bool, ()> {
+    fn delete(&self, id: Uuid) -> Result<bool, RepositoryError> {
         let mut users = self.lock_users()?;
         Ok(users.remove(&id).is_some())
     }

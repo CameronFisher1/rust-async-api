@@ -1,6 +1,6 @@
 use rust_async_api::domain::user::User;
-use rust_async_api::repository::UserRepository;
 use rust_async_api::repository::in_memory_user_repository::InMemoryUserRepository;
+use rust_async_api::repository::{RepositoryError, UserRepository};
 use uuid::Uuid;
 
 #[test]
@@ -66,4 +66,51 @@ fn in_memory_repository_update_and_delete_return_absent_for_missing_user() {
 
     let deleted = repository.delete(uuid).expect("delete should succeed");
     assert!(!deleted);
+}
+
+#[test]
+fn in_memory_repository_create_returns_duplicate_id_error() {
+    let repository = InMemoryUserRepository::new();
+    let user = User {
+        id: Uuid::new_v4(),
+        name: "Alice".to_string(),
+        description: "Admin".to_string(),
+    };
+
+    repository
+        .create(user.clone())
+        .expect("first create should succeed");
+
+    let error = repository
+        .create(user)
+        .expect_err("second create with same id should fail");
+    assert!(matches!(error, RepositoryError::DuplicateId));
+}
+
+#[test]
+fn in_memory_repository_returns_storage_failure_when_mutex_is_poisoned() {
+    let repository = InMemoryUserRepository::new();
+    poison_users_mutex(&repository);
+
+    let error = repository
+        .get_all()
+        .expect_err("get_all should fail when storage mutex is poisoned");
+    assert!(matches!(error, RepositoryError::StorageFailure));
+}
+
+fn poison_users_mutex(repository: &InMemoryUserRepository) {
+    use std::collections::HashMap;
+    use std::panic::{AssertUnwindSafe, catch_unwind};
+    use std::sync::Mutex;
+
+    // SAFETY: InMemoryUserRepository currently contains a single field:
+    // Mutex<HashMap<Uuid, User>>. This test-only helper accesses it to poison the lock.
+    let users_mutex: &Mutex<HashMap<Uuid, User>> =
+        unsafe { &*((repository as *const InMemoryUserRepository).cast()) };
+
+    let panic_result = catch_unwind(AssertUnwindSafe(|| {
+        let _guard = users_mutex.lock().expect("should lock before panic");
+        panic!("poison users mutex");
+    }));
+    assert!(panic_result.is_err());
 }

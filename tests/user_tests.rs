@@ -57,7 +57,7 @@ async fn create_user_with_invalid_payload_returns_bad_request() {
 
     assert_eq!(response.status(), StatusCode::BAD_REQUEST);
     let body = response_json(response).await;
-    assert_eq!(body, json!({"error":"Invalid input"}));
+    assert_eq!(body, json!({"error":"Invalid payload"}));
 }
 
 #[tokio::test]
@@ -254,7 +254,7 @@ async fn update_user_with_invalid_input_returns_bad_request() {
 
     assert_eq!(response.status(), StatusCode::BAD_REQUEST);
     let body = response_json(response).await;
-    assert_eq!(body, json!({"error":"Invalid input"}));
+    assert_eq!(body, json!({"error":"Invalid ID"}));
 }
 
 #[tokio::test]

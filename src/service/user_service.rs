@@ -4,7 +4,7 @@ use axum::http::StatusCode;
 use uuid::Uuid;
 
 use crate::domain::user::{CreateUserRequest, UpdateUserRequest, User};
-use crate::error::app_error::{ApiError, api_error};
+use crate::error::app_error::{ApiError, api_error, convert_repo_error};
 use crate::repository::UserRepository;
 
 #[derive(Clone)]
@@ -19,7 +19,7 @@ impl UserService {
 
     pub fn create_user(&self, payload: CreateUserRequest) -> Result<User, ApiError> {
         if payload.name.is_empty() || payload.description.is_empty() {
-            return Err(api_error(StatusCode::BAD_REQUEST, "Invalid input"));
+            return Err(api_error(StatusCode::BAD_REQUEST, "Invalid payload"));
         }
 
         let user = User {
@@ -30,39 +30,33 @@ impl UserService {
 
         self.repository
             .create(user)
-            .map_err(|_| api_error(StatusCode::INTERNAL_SERVER_ERROR, "Internal Server Error"))
+            .map_err(|e| convert_repo_error(e))
     }
 
     pub fn get_all_users(&self) -> Result<Vec<User>, ApiError> {
-        self.repository
-            .get_all()
-            .map_err(|_| api_error(StatusCode::INTERNAL_SERVER_ERROR, "Internal Server Error"))
+        self.repository.get_all().map_err(|e| convert_repo_error(e))
     }
 
     pub fn get_user(&self, id: &str) -> Result<User, ApiError> {
-        if !is_valid_uuid(id) {
-            return Err(api_error(StatusCode::BAD_REQUEST, "Invalid ID"));
-        }
-
         let user = self
             .repository
             .get_by_id(
                 Uuid::parse_str(&id)
-                    .map_err(|_| api_error(StatusCode::BAD_REQUEST, "Invalid input"))?,
+                    .map_err(|_| api_error(StatusCode::BAD_REQUEST, "Invalid ID"))?,
             )
-            .map_err(|_| api_error(StatusCode::INTERNAL_SERVER_ERROR, "Internal Server Error"))?;
+            .map_err(|e| convert_repo_error(e))?;
 
         user.ok_or_else(|| api_error(StatusCode::NOT_FOUND, "User not found"))
     }
 
     pub fn update_user(&self, id: &str, payload: UpdateUserRequest) -> Result<User, ApiError> {
-        if !is_valid_uuid(id) || payload.name.is_empty() || payload.description.is_empty() {
-            return Err(api_error(StatusCode::BAD_REQUEST, "Invalid input"));
+        if payload.name.is_empty() || payload.description.is_empty() {
+            return Err(api_error(StatusCode::BAD_REQUEST, "Invalid payload"));
         }
 
         let new_user = User {
             id: Uuid::parse_str(&id)
-                .map_err(|_| api_error(StatusCode::BAD_REQUEST, "Invalid input"))?,
+                .map_err(|_| api_error(StatusCode::BAD_REQUEST, "Invalid ID"))?,
             name: payload.name,
             description: payload.description,
         };
@@ -70,23 +64,19 @@ impl UserService {
         let updated = self
             .repository
             .update(new_user)
-            .map_err(|_| api_error(StatusCode::INTERNAL_SERVER_ERROR, "Internal Server Error"))?;
+            .map_err(|e| convert_repo_error(e))?;
 
         updated.ok_or_else(|| api_error(StatusCode::NOT_FOUND, "User not found"))
     }
 
     pub fn delete_user(&self, id: &str) -> Result<(), ApiError> {
-        if !is_valid_uuid(id) {
-            return Err(api_error(StatusCode::BAD_REQUEST, "Invalid ID"));
-        }
-
         let deleted = self
             .repository
             .delete(
                 Uuid::parse_str(&id)
-                    .map_err(|_| api_error(StatusCode::BAD_REQUEST, "Invalid input"))?,
+                    .map_err(|_| api_error(StatusCode::BAD_REQUEST, "Invalid ID"))?,
             )
-            .map_err(|_| api_error(StatusCode::INTERNAL_SERVER_ERROR, "Internal Server Error"))?;
+            .map_err(|e| convert_repo_error(e))?;
 
         if deleted {
             Ok(())
@@ -94,8 +84,4 @@ impl UserService {
             Err(api_error(StatusCode::NOT_FOUND, "User not found"))
         }
     }
-}
-
-fn is_valid_uuid(uuid_str: &str) -> bool {
-    Uuid::parse_str(uuid_str).is_ok()
 }

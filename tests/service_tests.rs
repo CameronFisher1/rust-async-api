@@ -21,7 +21,7 @@ fn create_user_rejects_invalid_input() {
         Ok(_) => panic!("create should fail"),
         Err(err) => {
             assert_eq!(err.0, StatusCode::BAD_REQUEST);
-            assert_eq!(err.1.0.error, "Invalid input");
+            assert_eq!(err.1.0.error, "Invalid payload");
         }
     }
 }
